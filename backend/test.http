@@ -12,14 +12,11 @@ Content-Type: application/json
 
 {
   "originalUrl": "https://www.google.com",
-  "customCode": "google167t"
+  "customCode": "google167r"
 }
 
-### Redirect Random Short URL
-GET http://localhost:5000/api/url/<short id>
+### Redirect Short URL
+GET http://localhost:5000/<shortId>
 
-### Analytics Random Short URL
-GET http://localhost:5000/api/url/<short id>/analytics
-
-### Analytics Custom Short URL
-GET http://localhost:5000/api/url/<custom id>/analytics
+### Analytics for Short URL
+GET http://localhost:5000/api/url/<shortId>/analytics

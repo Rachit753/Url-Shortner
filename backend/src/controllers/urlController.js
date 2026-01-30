@@ -7,46 +7,65 @@ const axios = require("axios");
 // Random Short URL
 exports.createShortUrl = async (req, res) => {
   try {
-    const { originalUrl } = req.body;
-    if (!originalUrl || !validator.isURL(originalUrl))
+    let { originalUrl } = req.body;
+
+    if (!originalUrl.startsWith("http://") && !originalUrl.startsWith("https://")) {
+      originalUrl = "https://" + originalUrl;
+    }
+
+    if (!validator.isURL(originalUrl))
       return res.status(400).json({ error: "Valid Original URL required" });
 
     const shortId = nanoid(8);
     await Url.create({ originalUrl, shortId });
 
-    res.setHeader("Content-Type", "application/json");
-    res.send(JSON.stringify({
+    res.json({
+      shortId,
       shortUrl: `${process.env.BASE_URL}/${shortId}`,
       originalUrl
-    }, null, 2));
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 };
+
 
 // Custom Short URL
 exports.createCustomUrl = async (req, res) => {
   try {
-    const { originalUrl, customCode } = req.body;
+    let { originalUrl, customCode } = req.body;
+
+    // Add https:// automatically if user forgets
+    if (!originalUrl.startsWith("http://") && !originalUrl.startsWith("https://")) {
+      originalUrl = "https://" + originalUrl;
+    }
+
+    // Validate URL after fixing
     if (!originalUrl || !customCode || !validator.isURL(originalUrl))
       return res.status(400).json({ error: "Valid Original URL and custom code required" });
 
+    // Check if custom code is already used
     const existing = await Url.findOne({ shortId: customCode });
     if (existing) return res.status(400).json({ error: "This custom code is already taken" });
 
+    // Save final version of URL
     await Url.create({ originalUrl, shortId: customCode });
 
-    res.setHeader("Content-Type", "application/json");
-    res.send(JSON.stringify({
+    // Return proper JSON output
+    res.json({
+      shortId: customCode,
       shortUrl: `${process.env.BASE_URL}/${customCode}`,
       originalUrl
-    }, null, 2));
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 };
+
 
 // Redirect + save analytics
 
@@ -59,7 +78,7 @@ exports.redirectUrl = async (req, res) => {
     url.clicks++;
     await url.save();
 
-    // 🔧 Handle localhost IPs (replace ::1 with dummy IP for testing)
+    // Handle localhost IPs (replace ::1 with dummy IP for testing)
     let ip = req.ip;
     if (ip === "::1" || ip === "127.0.0.1") {
       ip = "8.8.8.8"; // Google's public IP (for testing)
@@ -68,7 +87,7 @@ exports.redirectUrl = async (req, res) => {
     const userAgent = req.get("user-agent");
     const referrer = req.get("referer") || "Direct";
 
-    // 🌍 Get location info using free API
+    // Get location info using free API
     let location = "Unknown";
     try {
       const response = await axios.get(`https://ipapi.co/${ip}/json/`);
@@ -81,7 +100,7 @@ exports.redirectUrl = async (req, res) => {
       console.warn("🌐 Geo lookup failed:", geoError.message);
     }
 
-    // 💾 Save click analytics
+    // Save click analytics
     await Click.create({
       urlId: url._id,
       ip,
@@ -108,25 +127,25 @@ exports.getAnalytics = async (req, res) => {
 
     const clicks = await Click.find({ urlId: url._id });
 
-    // 🧮 Total & Unique Visitors
+    // Total & Unique Visitors
     const totalClicks = clicks.length;
     const uniqueVisitors = new Set(clicks.map(c => `${c.ip}_${c.userAgent}`)).size;
 
-    // 📅 Group by Date
+    // Group by Date
     const dailyClicks = {};
     clicks.forEach(c => {
       const date = new Date(c.timestamp).toISOString().split("T")[0];
       dailyClicks[date] = (dailyClicks[date] || 0) + 1;
     });
 
-    // 🌍 Group by Location
+    // Group by Location
     const locationStats = {};
     clicks.forEach(c => {
       const loc = c.location || "Unknown";
       locationStats[loc] = (locationStats[loc] || 0) + 1;
     });
 
-    // 💻 Group by Browser
+    // Group by Browser
     const browserStats = {};
     clicks.forEach(c => {
       let browser = "Other";
@@ -137,7 +156,7 @@ exports.getAnalytics = async (req, res) => {
       browserStats[browser] = (browserStats[browser] || 0) + 1;
     });
 
-    // 🧾 Final summary
+    // Final summary
     const analyticsSummary = {
       shortId: url.shortId,
       originalUrl: url.originalUrl,

@@ -30,11 +30,12 @@ app.use(limiter);
 app.use(mongoSanitize());
 
 // ------------------- Routes -------------------
-const urlRoutes = require("./routes/UrlRoutes");
+const urlRoutes = require("./routes/urlRoutes");
 app.use("/api/url", urlRoutes);
+app.use("/", urlRoutes);
 
 app.get("/", (req, res) => {
-  res.send("🚀 URL Shortener API Running...");
+  res.send("$$ URL Shortener API Running...");
 });
 
 // ------------------- Database -------------------
@@ -45,11 +46,11 @@ connectDB();
 //     useNewUrlParser: true,
 //     useUnifiedTopology: true,
 //   })
-//   .then(() => console.log("✅ MongoDB Connected"))
-//   .catch((err) => console.error("❌ DB Connection Error:", err));
+//   .then(() => console.log("MongoDB Connected"))
+//   .catch((err) => console.error("DB Connection Error:", err));
 
 // ------------------- Server -------------------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`$ Server running on port ${PORT}`);
 });

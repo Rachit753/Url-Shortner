@@ -2,75 +2,45 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import MetricCard from "./MetricCard";
 import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
+  PieChart, Pie, Cell, Tooltip,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer
 } from "recharts";
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+const COLORS = ["#00C49F", "#0088FE", "#FFBB28", "#FF8042"];
 
-const AnalyticsDashboard = () => {
+const AnalyticsDashboard = ({ shortId }) => {
   const [data, setData] = useState(null);
-  const [shortId, setShortId] = useState("U-o1oa9E"); // 🔧 change to your shortId
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Function to fetch analytics
+    if (!shortId) return;
     const fetchAnalytics = async () => {
       try {
         const res = await axios.get(`http://localhost:5000/api/url/${shortId}/analytics`);
         setData(res.data);
         setLoading(false);
       } catch (err) {
-        console.error("❌ Error fetching analytics:", err);
+        console.error("Error fetching analytics:", err);
         setLoading(false);
       }
     };
 
-    // Initial fetch
     fetchAnalytics();
-
-    // Auto-refresh every 5 seconds
-    const interval = setInterval(fetchAnalytics, 5000);
-
-    // Cleanup on unmount
+    const interval = setInterval(fetchAnalytics, 2000);
     return () => clearInterval(interval);
   }, [shortId]);
 
-  if (loading) return <p>Loading analytics...</p>;
-  if (!data) return <p>No data found.</p>;
+  if (!shortId) return <p style={{ color: "white" }}>Enter a URL to generate & view analytics.</p>;
+  if (loading) return <p style={{ color: "white" }}>Loading analytics...</p>;
+  if (!data) return <p style={{ color: "white" }}>No data found.</p>;
 
   const dailyClicks = Object.entries(data.dailyClicks || {}).map(([date, count]) => ({ date, count }));
   const browserStats = Object.entries(data.browserStats || {}).map(([name, value]) => ({ name, value }));
   const locationStats = Object.entries(data.locationStats || {}).map(([name, value]) => ({ name, value }));
 
   return (
-    <div style={{ padding: "30px", fontFamily: "Arial" }}>
+    <div style={{ padding: "30px",  textAlign: "center" }}>
       <h1>📊 URL Analytics Dashboard</h1>
-
-      {/* Input box for dynamic shortId */}
-      <div style={{ marginBottom: "20px" }}>
-        <input
-          type="text"
-          value={shortId}
-          onChange={(e) => setShortId(e.target.value)}
-          placeholder="Enter short ID..."
-          style={{
-            padding: "10px",
-            fontSize: "16px",
-            width: "300px",
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-          }}
-        />
-      </div>
 
       <p><b>Short ID:</b> {data.shortId}</p>
       <p><b>Original URL:</b> {data.originalUrl}</p>
@@ -83,47 +53,35 @@ const AnalyticsDashboard = () => {
       <h2 style={{ marginTop: "40px" }}>📅 Daily Clicks</h2>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={dailyClicks}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Line type="monotone" dataKey="count" stroke="#8884d8" strokeWidth={2} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#00a985" />
+          <XAxis dataKey="date" stroke="#ffffff" />
+          <YAxis stroke="#ffffff" />
+          <Tooltip contentStyle={{ backgroundColor: "#004a4f", color: "#fff" }} />
+          <Line type="monotone" dataKey="count" stroke="#00C49F" strokeWidth={3} />
         </LineChart>
       </ResponsiveContainer>
 
       <h2 style={{ marginTop: "40px" }}>🌍 Location Breakdown</h2>
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
-          <Pie
-            data={locationStats}
-            dataKey="value"
-            nameKey="name"
-            outerRadius={120}
-            label
-          >
+          <Pie data={locationStats} dataKey="value" nameKey="name" outerRadius={120} label>
             {locationStats.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell key={`cell-loc-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip />
+          <Tooltip contentStyle={{ backgroundColor: "#004a4f", color: "#fff" }} />
         </PieChart>
       </ResponsiveContainer>
 
       <h2 style={{ marginTop: "40px" }}>💻 Browser Stats</h2>
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
-          <Pie
-            data={browserStats}
-            dataKey="value"
-            nameKey="name"
-            outerRadius={120}
-            label
-          >
+          <Pie data={browserStats} dataKey="value" nameKey="name" outerRadius={120} label>
             {browserStats.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell key={`cell-br-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip />
+          <Tooltip contentStyle={{ backgroundColor: "#004a4f", color: "#fff" }} />
         </PieChart>
       </ResponsiveContainer>
     </div>
