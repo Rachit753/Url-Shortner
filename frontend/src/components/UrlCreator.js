@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { QRCodeCanvas } from "qrcode.react";
 
 const UrlCreator = ({ onAnalytics }) => {
   const [originalUrl, setOriginalUrl] = useState("");
@@ -7,13 +8,14 @@ const UrlCreator = ({ onAnalytics }) => {
   const [shortUrl, setShortUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     setShortUrl("");
-
+    setCopied(false);
     try {
       const endpoint = customCode
         ? "http://localhost:5000/api/url/custom"
@@ -25,7 +27,6 @@ const UrlCreator = ({ onAnalytics }) => {
 
       const res = await axios.post(endpoint, payload);
 
-      // Extract correct shortId + correct backend redirect URL
       const newShortId = customCode || res.data.shortUrl.split("/").pop();
       const finalShortUrl = `http://localhost:5000/${newShortId}`;
 
@@ -48,7 +49,9 @@ const UrlCreator = ({ onAnalytics }) => {
         textAlign: "center",
       }}
     >
-      <h2 style={{ marginBottom: "18px", fontWeight: "600" }}>🔗 Create a Short URL</h2>
+      <h2 style={{ marginBottom: "18px", fontWeight: "600" }}>
+        🔗 Create a Short URL
+      </h2>
 
       <form
         onSubmit={handleSubmit}
@@ -80,17 +83,40 @@ const UrlCreator = ({ onAnalytics }) => {
       </form>
 
       {shortUrl && (
-        <p style={{ marginTop: "15px", fontSize: "16px", color: "#00ffb7" }}>
-          ✅ Short URL:{" "}
-          <a
-            href={shortUrl}
-            target="_blank"
-            rel="noreferrer"
-            style={{ color: "#00ffb7", fontWeight: "600" }}
+        <div style={{ marginTop: "15px" }}>
+          <p style={{ fontSize: "16px", color: "#00ffb7" }}>
+            Short URL:{" "}
+            <a
+              href={shortUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "#00ffb7", fontWeight: "600" }}
+            >
+              {shortUrl}
+            </a>
+          </p>
+
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(shortUrl);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            style={{ marginTop: "10px" }}
           >
-            {shortUrl}
-          </a>
-        </p>
+            Copy
+          </button>
+
+          {copied && (
+            <p style={{ color: "#00ffb7", marginTop: "8px" }}>
+              Copied!
+            </p>
+          )}
+
+          <div style={{ marginTop: "20px" }}>
+            <QRCodeCanvas value={shortUrl} size={120} />
+          </div>
+        </div>
       )}
 
       {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}

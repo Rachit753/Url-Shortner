@@ -12,10 +12,7 @@ exports.saveClickAnalytics = async ({ urlId, ip, userAgent, referrer, location }
 };
 
 exports.getAnalyticsData = async (url) => {
-  const urlId =
-  typeof url._id === "string"
-    ? new mongoose.Types.ObjectId(url._id)
-    : url._id;
+  const urlId = url._id.toString();
 
   const totalClicks = url.clicks;
 

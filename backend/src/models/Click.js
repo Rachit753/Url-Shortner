@@ -2,8 +2,7 @@ const mongoose = require("mongoose");
 
 const clickSchema = new mongoose.Schema({
   urlId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Url",
+    type: String,
     required: true,
     index: true,
   },

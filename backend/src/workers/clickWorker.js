@@ -13,7 +13,7 @@ clickQueue.process(async (job) => {
 
   try {
     await saveClickAnalytics({
-      urlId: new mongoose.Types.ObjectId(urlId),
+      urlId: urlId.toString(),
       ip,
       userAgent,
       referrer,

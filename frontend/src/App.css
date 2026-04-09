@@ -2,7 +2,7 @@
 .App {
   min-height: 100vh;
   padding: 30px;
-  background: #003135; /* your original teal tone */
+  background: #003135;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -22,6 +22,7 @@ input {
   outline: none;
   font-size: 15px;
 }
+
 input::placeholder {
   color: #88bdbd;
 }
@@ -36,17 +37,22 @@ button {
   cursor: pointer;
   font-weight: 600;
   font-size: 14px;
-  transition: 0.25s ease;
+
+  /* Improved transition */
+  transition: all 0.3s ease;
 }
+
 button:hover {
-  transform: translateY(-2px);
+  /* Combined effects */
+  transform: translateY(-2px) scale(1.05);
   background: #00a985;
 }
+
 button:active {
   transform: scale(0.97);
 }
 
-/* METRIC CARDS (NEUMORPHISM) */
+/* METRIC CARDS */
 .metric-card {
   background: #003a3f;
   color: white;
@@ -55,11 +61,16 @@ button:active {
   box-shadow: 8px 8px 16px #00272b, -8px -8px 16px #004b51;
   flex: 1;
   text-align: center;
+  transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-5px);
 }
 
 /* HEADINGS */
-h1, h2 {
+h1,
+h2 {
   text-align: center;
   letter-spacing: 1px;
 }
-
