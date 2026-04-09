@@ -15,25 +15,29 @@ const Click = require("../models/Click");
 const axios = require("axios");
 
 exports.createShortUrl = asyncHandler(async (req, res) => {
-  const { originalUrl } = req.body;
+  const { originalUrl, expiresAt } = req.body;
 
-  const result = await createShortUrlService(originalUrl);
+  const result = await createShortUrlService(originalUrl, expiresAt);
   res.json(result);
 });
 
 exports.createCustomUrl = asyncHandler(async (req, res) => {
-  const { originalUrl, customCode } = req.body;
+  const { originalUrl, customCode, expiresAt } = req.body;
 
   if (!customCode) {
     return res.status(400).json({ message: "Custom code required" });
   }
 
-  const result = await createCustomUrlService(originalUrl, customCode);
+  const result = await createCustomUrlService(originalUrl, customCode, expiresAt);
   res.json(result);
 });
 
 exports.redirectUrl = asyncHandler(async (req, res) => {
   const url = await getUrlByShortId(req.params.shortId);
+
+  if (url.expiresAt && url.expiresAt < new Date()) {
+  return res.status(410).json({ message: "Link expired" });
+}
 
   incrementClicks(url);
 

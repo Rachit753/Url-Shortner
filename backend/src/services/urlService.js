@@ -1,22 +1,24 @@
 const Url = require("../models/Url");
 const { nanoid } = require("nanoid");
 
-exports.createShortUrlService = async (originalUrl) => {
+exports.createShortUrlService = async (originalUrl, expiresAt) => {
   const shortId = nanoid(8);
 
   const url = await Url.create({
     originalUrl,
     shortId,
+    expiresAt: expiresAt || null,
   });
 
   return {
     shortId,
     shortUrl: `${process.env.BASE_URL}/${shortId}`,
     originalUrl: url.originalUrl,
+    expiresAt: url.expiresAt,
   };
 };
 
-exports.createCustomUrlService = async (originalUrl, customCode) => {
+exports.createCustomUrlService = async (originalUrl, customCode, expiresAt) => {
   const existing = await Url.findOne({ shortId: customCode });
 
   if (existing) {
@@ -28,12 +30,14 @@ exports.createCustomUrlService = async (originalUrl, customCode) => {
   const url = await Url.create({
     originalUrl,
     shortId: customCode,
+    expiresAt: expiresAt || null,
   });
 
   return {
     shortId: customCode,
     shortUrl: `${process.env.BASE_URL}/${customCode}`,
     originalUrl: url.originalUrl,
+    expiresAt: url.expiresAt,
   };
 };
 

@@ -28,4 +28,6 @@ const clickSchema = new mongoose.Schema({
 
 clickSchema.index({ urlId: 1, timestamp: -1 });
 
+clickSchema.index({ urlId: 1, ip: 1, userAgent: 1 });
+
 module.exports = mongoose.model("Click", clickSchema);
