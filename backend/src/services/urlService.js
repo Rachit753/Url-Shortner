@@ -1,5 +1,6 @@
 const Url = require("../models/Url");
 const { nanoid } = require("nanoid");
+const redis = require("../config/redis");
 
 exports.createShortUrlService = async (originalUrl, expiresAt) => {
   const shortId = nanoid(8);
@@ -9,6 +10,8 @@ exports.createShortUrlService = async (originalUrl, expiresAt) => {
     shortId,
     expiresAt: expiresAt || null,
   });
+
+  await redis.set(shortId, JSON.stringify(url), "EX", 3600);
 
   return {
     shortId,
@@ -33,6 +36,8 @@ exports.createCustomUrlService = async (originalUrl, customCode, expiresAt) => {
     expiresAt: expiresAt || null,
   });
 
+  await redis.set(customCode, JSON.stringify(url), "EX", 3600);
+
   return {
     shortId: customCode,
     shortUrl: `${process.env.BASE_URL}/${customCode}`,
@@ -42,6 +47,13 @@ exports.createCustomUrlService = async (originalUrl, customCode, expiresAt) => {
 };
 
 exports.getUrlByShortId = async (shortId) => {
+
+  const cached = await redis.get(shortId);
+
+  if (cached) {
+    return JSON.parse(cached);
+  }
+
   const url = await Url.findOne({ shortId });
 
   if (!url) {
@@ -49,6 +61,8 @@ exports.getUrlByShortId = async (shortId) => {
     error.statusCode = 404;
     throw error;
   }
+
+  await redis.set(shortId, JSON.stringify(url), "EX", 3600);
 
   return url;
 };
