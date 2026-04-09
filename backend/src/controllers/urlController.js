@@ -11,6 +11,8 @@ const {
   getAnalyticsData,
 } = require("../services/analyticsService");
 
+const clickQueue = require("../queues/clickQueue");
+
 const Click = require("../models/Click");
 const axios = require("axios");
 
@@ -36,8 +38,8 @@ exports.redirectUrl = asyncHandler(async (req, res) => {
   const url = await getUrlByShortId(req.params.shortId);
 
   if (url.expiresAt && url.expiresAt < new Date()) {
-  return res.status(410).json({ message: "Link expired" });
-}
+    return res.status(410).json({ message: "Link expired" });
+  }
 
   incrementClicks(url);
 
@@ -45,23 +47,14 @@ exports.redirectUrl = asyncHandler(async (req, res) => {
   const userAgent = req.get("user-agent");
   const referrer = req.get("referer") || "Direct";
 
-  let location = "Unknown";
+  const location = "Unknown";
 
-  try {
-    const response = await axios.get(`https://ipapi.co/${ip}/json/`);
-    if (response.data?.country_name) {
-      location = response.data.country_name;
-    }
-  } catch {}
-
-  process.nextTick(() => {
-    saveClickAnalytics({
-      urlId: url._id,
-      ip,
-      userAgent,
-      referrer,
-      location,
-    });
+  clickQueue.add({
+    urlId: url._id,
+    ip,
+    userAgent,
+    referrer,
+    location,
   });
 
   return res.redirect(url.originalUrl);
@@ -72,5 +65,6 @@ exports.getAnalytics = asyncHandler(async (req, res) => {
 
   const data = await getAnalyticsData(url);
 
+  res.setHeader("Cache-Control", "no-store");
   res.json(data);
 });

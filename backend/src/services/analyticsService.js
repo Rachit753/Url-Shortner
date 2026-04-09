@@ -1,4 +1,5 @@
 const Click = require("../models/Click");
+const mongoose = require("mongoose");
 
 exports.saveClickAnalytics = async ({ urlId, ip, userAgent, referrer, location }) => {
   await Click.create({
@@ -11,9 +12,12 @@ exports.saveClickAnalytics = async ({ urlId, ip, userAgent, referrer, location }
 };
 
 exports.getAnalyticsData = async (url) => {
-  const urlId = url._id;
+  const urlId =
+  typeof url._id === "string"
+    ? new mongoose.Types.ObjectId(url._id)
+    : url._id;
 
-  const totalClicks = await Click.countDocuments({ urlId });
+  const totalClicks = url.clicks;
 
   const uniqueVisitorsAgg = await Click.aggregate([
     { $match: { urlId } },

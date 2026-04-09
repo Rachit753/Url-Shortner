@@ -16,7 +16,11 @@ const AnalyticsDashboard = ({ shortId }) => {
     if (!shortId) return;
     const fetchAnalytics = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/url/${shortId}/analytics`);
+        const res = await axios.get(`http://localhost:5000/api/url/${shortId}/analytics`, {
+  headers: {
+    "Cache-Control": "no-cache"
+  }
+  });
         setData(res.data);
         setLoading(false);
       } catch (err) {
@@ -26,7 +30,7 @@ const AnalyticsDashboard = ({ shortId }) => {
     };
 
     fetchAnalytics();
-    const interval = setInterval(fetchAnalytics, 2000);
+    const interval = setInterval(fetchAnalytics, 5000);
     return () => clearInterval(interval);
   }, [shortId]);
 

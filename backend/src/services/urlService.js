@@ -11,7 +11,18 @@ exports.createShortUrlService = async (originalUrl, expiresAt) => {
     expiresAt: expiresAt || null,
   });
 
-  await redis.set(shortId, JSON.stringify(url), "EX", 3600);
+  await redis.set(
+    shortId,
+    JSON.stringify({
+      _id: url._id,
+      originalUrl: url.originalUrl,
+      shortId: url.shortId,
+      expiresAt: url.expiresAt,
+      clicks: url.clicks || 0 
+    }),
+    "EX",
+    3600
+  );
 
   return {
     shortId,
@@ -36,7 +47,18 @@ exports.createCustomUrlService = async (originalUrl, customCode, expiresAt) => {
     expiresAt: expiresAt || null,
   });
 
-  await redis.set(customCode, JSON.stringify(url), "EX", 3600);
+  await redis.set(
+    customCode,
+    JSON.stringify({
+      _id: url._id,
+      originalUrl: url.originalUrl,
+      shortId: url.shortId,
+      expiresAt: url.expiresAt,
+      clicks: url.clicks || 0 
+    }),
+    "EX",
+    3600
+  );
 
   return {
     shortId: customCode,
@@ -51,8 +73,10 @@ exports.getUrlByShortId = async (shortId) => {
   const cached = await redis.get(shortId);
 
   if (cached) {
-    return JSON.parse(cached);
-  }
+  const parsed = JSON.parse(cached);
+  parsed.clicks = parsed.clicks || 0;
+  return parsed;
+}
 
   const url = await Url.findOne({ shortId });
 
@@ -62,12 +86,40 @@ exports.getUrlByShortId = async (shortId) => {
     throw error;
   }
 
-  await redis.set(shortId, JSON.stringify(url), "EX", 3600);
+  await redis.set(
+    shortId,
+    JSON.stringify({
+      _id: url._id,
+      originalUrl: url.originalUrl,
+      shortId: url.shortId,
+      expiresAt: url.expiresAt,
+      clicks: url.clicks || 0
+    }),
+    "EX",
+    3600
+  );
 
   return url;
 };
 
 exports.incrementClicks = async (url) => {
-  url.clicks += 1;
-  await url.save();
+  await Url.updateOne(
+    { _id: url._id },
+    { $inc: { clicks: 1 } }
+  );
+
+  const updatedUrl = await Url.findById(url._id);
+
+  await redis.set(
+    updatedUrl.shortId,
+    JSON.stringify({
+      _id: updatedUrl._id,
+      originalUrl: updatedUrl.originalUrl,
+      shortId: updatedUrl.shortId,
+      expiresAt: updatedUrl.expiresAt,
+      clicks: updatedUrl.clicks
+    }),
+    "EX",
+    3600
+  );
 };
