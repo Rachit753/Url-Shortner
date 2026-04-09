@@ -1,17 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const { createShortUrl, createCustomUrl, redirectUrl, getAnalytics } = require("../controllers/urlController");
 
-// Random Short URL
-router.post("/shorten", createShortUrl);
+const {
+  createShortUrl,
+  createCustomUrl,
+  redirectUrl,
+  getAnalytics,
+} = require("../controllers/urlController");
 
-// Custom Short URL
-router.post("/custom", createCustomUrl);
+const validateUrl = require("../middleware/validateUrl");
 
-// Analytics for a short URL
+router.post("/shorten", validateUrl, createShortUrl);
+router.post("/custom", validateUrl, createCustomUrl);
+
 router.get("/:shortId/analytics", getAnalytics);
-
-// Redirect to original URL
 router.get("/:shortId", redirectUrl);
 
 module.exports = router;
