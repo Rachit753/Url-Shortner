@@ -35,7 +35,7 @@ exports.createCustomUrl = asyncHandler(async (req, res) => {
 exports.redirectUrl = asyncHandler(async (req, res) => {
   const url = await getUrlByShortId(req.params.shortId);
 
-  await incrementClicks(url);
+  incrementClicks(url);
 
   let ip = req.ip;
   const userAgent = req.get("user-agent");
@@ -66,9 +66,7 @@ exports.redirectUrl = asyncHandler(async (req, res) => {
 exports.getAnalytics = asyncHandler(async (req, res) => {
   const url = await getUrlByShortId(req.params.shortId);
 
-  const clicks = await Click.find({ urlId: url._id });
-
-  const data = await getAnalyticsData(url, clicks);
+  const data = await getAnalyticsData(url);
 
   res.json(data);
 });

@@ -10,31 +10,78 @@ exports.saveClickAnalytics = async ({ urlId, ip, userAgent, referrer, location }
   });
 };
 
-exports.getAnalyticsData = async (url, clicks) => {
-  const totalClicks = clicks.length;
-  const uniqueVisitors = new Set(clicks.map(c => `${c.ip}_${c.userAgent}`)).size;
+exports.getAnalyticsData = async (url) => {
+  const urlId = url._id;
+
+  const totalClicks = await Click.countDocuments({ urlId });
+
+  const uniqueVisitorsAgg = await Click.aggregate([
+    { $match: { urlId } },
+    {
+      $group: {
+        _id: { ip: "$ip", userAgent: "$userAgent" }
+      }
+    },
+    { $count: "uniqueVisitors" }
+  ]);
+
+  const uniqueVisitors = uniqueVisitorsAgg[0]?.uniqueVisitors || 0;
+
+  const dailyClicksAgg = await Click.aggregate([
+    { $match: { urlId } },
+    {
+      $group: {
+        _id: {
+          $dateToString: { format: "%Y-%m-%d", date: "$timestamp" }
+        },
+        count: { $sum: 1 }
+      }
+    }
+  ]);
 
   const dailyClicks = {};
-  clicks.forEach(c => {
-    const date = new Date(c.timestamp).toISOString().split("T")[0];
-    dailyClicks[date] = (dailyClicks[date] || 0) + 1;
+  dailyClicksAgg.forEach(d => {
+    dailyClicks[d._id] = d.count;
   });
+
+  const locationAgg = await Click.aggregate([
+    { $match: { urlId } },
+    {
+      $group: {
+        _id: "$location",
+        count: { $sum: 1 }
+      }
+    }
+  ]);
 
   const locationStats = {};
-  clicks.forEach(c => {
-    const loc = c.location || "Unknown";
-    locationStats[loc] = (locationStats[loc] || 0) + 1;
+  locationAgg.forEach(l => {
+    locationStats[l._id || "Unknown"] = l.count;
   });
 
-  const browserStats = {};
-  clicks.forEach(c => {
-    let browser = "Other";
-    if (c.userAgent.includes("Chrome")) browser = "Chrome";
-    else if (c.userAgent.includes("Firefox")) browser = "Firefox";
-    else if (c.userAgent.includes("Safari") && !c.userAgent.includes("Chrome")) browser = "Safari";
-    else if (c.userAgent.includes("Edge")) browser = "Edge";
+  const browserAgg = await Click.aggregate([
+    { $match: { urlId } },
+    {
+      $group: {
+        _id: {
+          $switch: {
+            branches: [
+              { case: { $regexMatch: { input: "$userAgent", regex: "Chrome" } }, then: "Chrome" },
+              { case: { $regexMatch: { input: "$userAgent", regex: "Firefox" } }, then: "Firefox" },
+              { case: { $regexMatch: { input: "$userAgent", regex: "Safari" } }, then: "Safari" },
+              { case: { $regexMatch: { input: "$userAgent", regex: "Edge" } }, then: "Edge" }
+            ],
+            default: "Other"
+          }
+        },
+        count: { $sum: 1 }
+      }
+    }
+  ]);
 
-    browserStats[browser] = (browserStats[browser] || 0) + 1;
+  const browserStats = {};
+  browserAgg.forEach(b => {
+    browserStats[b._id] = b.count;
   });
 
   return {
@@ -44,7 +91,6 @@ exports.getAnalyticsData = async (url, clicks) => {
     uniqueVisitors,
     dailyClicks,
     locationStats,
-    browserStats,
-    clicks,
+    browserStats
   };
 };

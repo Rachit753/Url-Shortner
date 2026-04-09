@@ -26,4 +26,6 @@ const clickSchema = new mongoose.Schema({
   },
 });
 
+clickSchema.index({ urlId: 1, timestamp: -1 });
+
 module.exports = mongoose.model("Click", clickSchema);
