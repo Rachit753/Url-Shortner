@@ -42,7 +42,7 @@ const AnalyticsDashboard = ({ shortId }) => {
     setLoading(true);
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/url/${shortId}/analytics`,
+        `${process.env.REACT_APP_API_URL}/api/url/${shortId}/analytics`,
         {
           params: customFilters,
           headers: { "Cache-Control": "no-cache" }
@@ -95,14 +95,15 @@ const AnalyticsDashboard = ({ shortId }) => {
           style={glowButton}
           onClick={() => {
             const query = new URLSearchParams(filters).toString();
-            window.open(`http://localhost:5000/api/url/${shortId}/export?${query}`);
+            window.open(
+              `${process.env.REACT_APP_API_URL}/api/url/${shortId}/export?${query}`
+            );
           }}
         >
           ⬇ Export CSV
         </button>
       </div>
 
-      {/* FILTERS */}
       <motion.div
         style={{ ...glass, marginTop: "30px" }}
         whileHover={{ scale: 1.02 }}
@@ -136,7 +137,6 @@ const AnalyticsDashboard = ({ shortId }) => {
         </div>
       </motion.div>
 
-      {/* METRICS */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(220px,1fr))",
@@ -152,7 +152,6 @@ const AnalyticsDashboard = ({ shortId }) => {
         </motion.div>
       </div>
 
-      {/* CHARTS */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(350px,1fr))",
@@ -160,7 +159,6 @@ const AnalyticsDashboard = ({ shortId }) => {
         marginTop: "40px"
       }}>
 
-        {/* LINE */}
         {dailyClicks.length > 0 && (
           <motion.div style={glass} whileHover={{ scale: 1.02 }}>
             <h3>📈 Daily Clicks</h3>
@@ -182,7 +180,6 @@ const AnalyticsDashboard = ({ shortId }) => {
           </motion.div>
         )}
 
-        {/* LOCATION */}
         {locationStats.length > 0 && (
           <motion.div style={glass}>
             <h3>🌍 Location</h3>
@@ -204,7 +201,6 @@ const AnalyticsDashboard = ({ shortId }) => {
           </motion.div>
         )}
 
-        {/* BROWSER */}
         {browserStats.length > 0 && (
           <motion.div style={glass}>
             <h3>💻 Browsers</h3>

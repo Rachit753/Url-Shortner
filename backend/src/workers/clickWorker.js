@@ -3,9 +3,10 @@ require("dotenv").config();
 const clickQueue = require("../queues/clickQueue");
 const { saveClickAnalytics } = require("../services/analyticsService");
 const mongoose = require("mongoose");
-const connectDB = require("../config/db");
 
-connectDB();
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("Worker MongoDB Connected"))
+  .catch(err => console.error("MongoDB Error:", err.message));
 
 clickQueue.process(async (job) => {
 
@@ -13,7 +14,7 @@ clickQueue.process(async (job) => {
 
   try {
     await saveClickAnalytics({
-      urlId: urlId.toString(),
+      urlId,
       ip,
       userAgent,
       referrer,
