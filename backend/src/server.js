@@ -16,7 +16,10 @@ const app = express();
 app.use(express.json());
 app.use(helmet());
 app.use(cors({
-  origin: ["http://localhost:3000"],
+  origin: [
+    "http://localhost:3000",
+    "https://url-shortner-nine-inky.vercel.app"
+  ],
   credentials: true
 }));
 app.use(morgan("dev"));
