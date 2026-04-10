@@ -96,6 +96,19 @@ const AnalyticsDashboard = ({ shortId }) => {
         🔄 Refresh Analytics
       </button>
 
+      <button
+        onClick={() => {
+          const query = new URLSearchParams(filters).toString();
+          window.open(
+            `http://localhost:5000/api/url/${shortId}/export?${query}`,
+            "_blank"
+          );
+        }}
+        style={{ marginLeft: "10px" }}
+      >
+        ⬇ Export CSV
+      </button>
+
       <div style={{ marginBottom: "20px", marginTop: "20px" }}>
         <input
           type="date"

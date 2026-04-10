@@ -118,3 +118,29 @@ else if (filters.browser) {
     browserStats
   };
 };
+
+exports.getClicksForExport = async (url, filters = {}) => {
+  const matchStage = {
+    urlId: url._id
+  };
+
+  if (filters.startDate && filters.endDate) {
+    matchStage.timestamp = {
+      $gte: new Date(filters.startDate),
+      $lte: new Date(filters.endDate + "T23:59:59.999Z")
+    };
+  }
+
+  if (filters.browser === "Edge") {
+    matchStage.userAgent = { $regex: "Edg", $options: "i" };
+  } else if (filters.browser === "Chrome") {
+    matchStage.$and = [
+      { userAgent: { $regex: "Chrome", $options: "i" } },
+      { userAgent: { $not: /Edg/i } }
+    ];
+  } else if (filters.browser) {
+    matchStage.userAgent = { $regex: filters.browser, $options: "i" };
+  }
+
+  return await Click.find(matchStage).sort({ timestamp: -1 });
+};

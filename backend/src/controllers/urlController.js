@@ -74,3 +74,34 @@ exports.getAnalytics = asyncHandler(async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   res.json(data);
 });
+
+const { getClicksForExport } = require("../services/analyticsService");
+
+exports.exportCSV = asyncHandler(async (req, res) => {
+  const url = await getUrlByShortId(req.params.shortId);
+
+  const filters = {
+    startDate: req.query.startDate,
+    endDate: req.query.endDate,
+    browser: req.query.browser,
+  };
+
+  const clicks = await getClicksForExport(url, filters);
+
+  let csv = "Timestamp,IP,Browser,Location,Referrer\n";
+
+  clicks.forEach(click => {
+    let browser = "Other";
+
+    if (click.userAgent.includes("Edg")) browser = "Edge";
+    else if (click.userAgent.includes("Chrome")) browser = "Chrome";
+    else if (click.userAgent.includes("Firefox")) browser = "Firefox";
+    else if (click.userAgent.includes("Safari")) browser = "Safari";
+
+    csv += `${click.timestamp},${click.ip},${browser},${click.location},${click.referrer}\n`;
+  });
+
+  res.header("Content-Type", "text/csv");
+  res.attachment("analytics.csv");
+  return res.send(csv);
+});
