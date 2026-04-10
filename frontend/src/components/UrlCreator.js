@@ -18,8 +18,8 @@ const UrlCreator = ({ onAnalytics }) => {
     setCopied(false);
     try {
       const endpoint = customCode
-        ? "http://localhost:5000/api/url/custom"
-        : "http://localhost:5000/api/url/shorten";
+        ? `${process.env.REACT_APP_API_URL}/api/url/custom`
+        : `${process.env.REACT_APP_API_URL}/api/url/shorten`;
 
       const payload = customCode
         ? { originalUrl, customCode }
@@ -27,8 +27,8 @@ const UrlCreator = ({ onAnalytics }) => {
 
       const res = await axios.post(endpoint, payload);
 
-      const newShortId = customCode || res.data.shortUrl.split("/").pop();
-      const finalShortUrl = `http://localhost:5000/${newShortId}`;
+      const finalShortUrl = res.data.shortUrl;
+      const newShortId = finalShortUrl.split("/").pop();
 
       setShortUrl(finalShortUrl);
       onAnalytics(newShortId);
