@@ -1,106 +1,245 @@
-# Url Shortner with Analytics Dashboard
+# URL Shortener with Real-Time Analytics
 
-This project is a full-stack URL shortener that allows users to generate short links (random or custom) and track detailed analytics for each link. It records total and unique clicks, daily traffic trends, visitor locations, referrers, and browser statistics, all visualized in a real-time dashboard.
+A **production-grade full-stack URL shortener** designed with scalability, performance, and real-world backend architecture in mind.  
+This project demonstrates **low-latency systems, asynchronous processing, and analytics pipelines** similar to large-scale services.
 
-The project is built for developers and learners who want to understand how URL shortening services work end-to-end, including backend APIs, database design, analytics collection, and frontend data visualization using modern web technologies.
+---
 
+## Deployment
 
-## Problem Statement
-Long URLs are difficult to share and track. This project solves that by providing short, customizable URLs along with detailed usage analytics.
+**Live Demo**
+https://url-shortner-nine-inky.vercel.app/  
+
+---
+
+## Screenshots
+
+| Home Page | Dashboard | Analytics |
+|-----------|--------------------|-------------|
+| ![](./docs/home.png) | ![](./docs/dashboard.png) | ![](./docs/analytics.png) |
+
+---
 
 ## Features
-- Generate short URLs (random or custom)
-- Redirect to original URLs
-- Track total and unique clicks
-- Collect visitor analytics (IP, location, browser, referrer)
-- Real-time analytics dashboard
-- Rate limiting and security middleware
-  
+
+### URL Shortening
+
+- Generate short URLs instantly  
+- Support for custom short codes  
+- High-speed redirection using Redis caching  
+
+---
+
+### Real-Time Analytics
+
+- Track total clicks and unique visitors  
+- Daily click trends visualization  
+- Browser-based analytics (Chrome, Edge, etc.)  
+- Location-based insights  
+- Interactive dashboards using charts  
+
+---
+
+### Performance & Scalability
+
+- Redis caching for ultra-fast URL resolution  
+- Queue-based architecture for handling high traffic  
+- Asynchronous background processing using workers  
+- Optimized MongoDB aggregation queries  
+
+---
+
+### Data Export
+
+- Export analytics data as CSV  
+- Filtered export by date and browser  
+
+---
+
+### Modern UI
+
+- Glassmorphism-inspired design  
+- Smooth animations using Framer Motion  
+- Fully responsive across devices  
+
+---
+
+## Performance Highlights
+
+- Reduced URL lookup latency using Redis caching  
+- Non-blocking request handling via queue-based processing  
+- Efficient analytics aggregation using MongoDB pipelines  
+- Designed to handle high-frequency read/write operations  
+
+---
+
 ## Tech Stack
 
-### Backend
-- Node.js
-- Express.js
-- MongoDB (Mongoose)
-- NanoID
-- Axios (GeoIP lookup)
-
 ### Frontend
-- React
-- Axios
-- Recharts
 
-### Security & Tools
-- Helmet
-- Express Rate Limit
-- Mongo Sanitize
-  
-## System Architecture
-1. Client sends URL to backend API
-2. Backend validates and stores URL in MongoDB
-3. Short URL redirects increment click counters
-4. Analytics data is stored per click
-5. Frontend polls analytics endpoint and visualizes data
-   
-## API Endpoints
+- React.js  
+- Axios  
+- Recharts  
+- Framer Motion  
 
-| Method | Endpoint | Description |
-|------|--------|------------|
-| POST | /api/url/shorten | Create random short URL |
-| POST | /api/url/custom | Create custom short URL |
-| GET | /:shortId | Redirect to original URL |
-| GET | /api/url/:shortId/analytics | Get analytics data |
+### Backend
 
-## Database Schema
+- Node.js  
+- Express.js  
+- MongoDB (Mongoose)  
 
-### Url
-- shortId (unique)
-- originalUrl
-- clicks
-- createdAt
+### Infrastructure
 
-### Click
-- urlId (reference)
-- ip
-- userAgent
-- referrer
-- location
-- timestamp
+- Redis (Upstash)  
+- Bull (Queue system)  
+- MongoDB Atlas  
+- Render (Backend Deployment)  
+- Vercel (Frontend Deployment)  
+
+---
+
+## Architecture Overview
+
+```
+Client (React - Vercel)
+        ↓
+API Layer (Node.js - Render)
+        ↓
+Cache Layer (Redis - Upstash)
+        ↓
+Queue System (Bull)
+        ↓
+Worker Service (Async Processing)
+        ↓
+Database (MongoDB Atlas)
+```
+
+---
+
+## System Workflow
+
+1. User submits a long URL  
+2. Backend generates a unique short ID  
+3. URL mapping stored in MongoDB  
+4. Frequently accessed URLs cached in Redis  
+
+### When a short link is accessed:
+
+- Instant redirect using Redis (low latency)  
+- Click event pushed to queue (non-blocking)  
+- Worker processes analytics asynchronously  
+- Data aggregated and stored in MongoDB  
+- Dashboard fetches and visualizes insights  
+
+---
+
+## Engineering Decisions
+
+- **Redis Caching** → Reduces database load and improves response time  
+- **Queue System (Bull)** → Prevents request blocking under high traffic  
+- **Worker Architecture** → Ensures scalable background processing  
+- **Aggregation Pipelines** → Efficient analytics computation  
+
+---
+
+## Why This Project
+
+This project was built to simulate **real-world backend engineering challenges**, including:
+
+- Designing low-latency systems  
+- Handling concurrent user traffic  
+- Implementing non-blocking architectures  
+- Building scalable analytics pipelines  
+
+It reflects practical system design concepts used in production-grade applications.
+
+---
+
+## Setup Instructions
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/Rachit753/url-shortener.git
+cd url-shortener
+```
+
+---
+
+### 2. Backend Setup
+
+```bash
+cd backend
+npm install
+```
+
+Create `.env` file:
+
+```
+PORT=5000
+MONGO_URI=your_mongodb_uri
+REDIS_URL=your_redis_url
+BASE_URL=http://localhost:5000
+```
+
+Run backend:
+
+```bash
+npm run dev
+```
+
+---
+
+### 3. Frontend Setup
+
+```bash
+cd frontend
+npm install
+```
+
+Create `.env` file:
+
+```
+REACT_APP_API_URL=http://localhost:5000
+```
+
+Run frontend:
+
+```bash
+npm start
+```
+
+---
 
 ## Environment Variables
-- PORT
-- MONGO_URI
-- BASE_URL
-  
-## Setup & Installation
-1. Clone the repository
-2. Install dependencies:
-   npm install
-3. Add environment variables:
-   PORT=5000
-   MONGO_URI=your_mongodb_uri
-4. Run the project:
-   npm start
-    
-## Security Considerations
-- Rate limiting to prevent abuse
-- MongoDB query sanitization
-- HTTP security headers using Helmet
-- Input validation on URLs
-  
-## Performance & Scalability Notes
-- Polling is used for simplicity; WebSockets can replace it for real-time updates
-- Analytics aggregation is done in application layer; can be optimized using MongoDB aggregation pipelines
-- Caching (Redis) can be added for high-traffic URLs
-  
-## Future Improvements
-- User authentication
-- URL expiration
-- QR code generation
-- WebSocket-based live analytics
-  
-## Author
-Rachit
 
-## License
-MIT
+- `MONGO_URI` → MongoDB connection string  
+- `REDIS_URL` → Redis (Upstash) connection  
+- `BASE_URL` → Backend base URL  
+- `REACT_APP_API_URL` → Frontend API URL  
+
+---
+
+## Future Improvements
+
+- Distributed rate limiting using Redis  
+- Custom domain support  
+- Link expiration & password protection  
+- Event streaming (Kafka) for real-time analytics  
+- Scalable sharding strategy for large datasets  
+
+---
+
+## Author
+
+**Rachit Chauhan**  
+Backend / Full Stack Developer  
+
+- GitHub: https://github.com/Rachit753 
+- LinkedIn: https://www.linkedin.com/in/rachit-chauhan/ 
+
+---
+
+## Show Your Support
+
+If you found this project useful, consider giving it a ⭐ on GitHub!
