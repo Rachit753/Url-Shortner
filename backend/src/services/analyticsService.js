@@ -1,5 +1,4 @@
 const Click = require("../models/Click");
-const mongoose = require("mongoose");
 
 exports.saveClickAnalytics = async ({ urlId, ip, userAgent, referrer, location }) => {
   await Click.create({
@@ -11,13 +10,37 @@ exports.saveClickAnalytics = async ({ urlId, ip, userAgent, referrer, location }
   });
 };
 
-exports.getAnalyticsData = async (url) => {
-  const urlId = url._id.toString();
+exports.getAnalyticsData = async (url, filters = {}) => {
 
-  const totalClicks = url.clicks;
+  const matchStage = {
+    urlId: url._id
+  };
+
+  if (filters.startDate && filters.endDate) {
+    matchStage.timestamp = {
+      $gte: new Date(filters.startDate),
+      $lte: new Date(filters.endDate + "T23:59:59.999Z")
+    };
+  }
+
+  if (filters.browser === "Edge") {
+  matchStage.userAgent = { $regex: "Edg", $options: "i" };
+} 
+else if (filters.browser === "Chrome") {
+  matchStage.$and = [
+    { userAgent: { $regex: "Chrome", $options: "i" } },
+    { userAgent: { $not: /Edg/i } }
+  ];
+} 
+else if (filters.browser) {
+  matchStage.userAgent = { $regex: filters.browser, $options: "i" };
+}
+
+  const totalClicksAgg = await Click.countDocuments(matchStage);
+  const totalClicks = totalClicksAgg;
 
   const uniqueVisitorsAgg = await Click.aggregate([
-    { $match: { urlId } },
+    { $match: matchStage },
     {
       $group: {
         _id: { ip: "$ip", userAgent: "$userAgent" }
@@ -29,7 +52,7 @@ exports.getAnalyticsData = async (url) => {
   const uniqueVisitors = uniqueVisitorsAgg[0]?.uniqueVisitors || 0;
 
   const dailyClicksAgg = await Click.aggregate([
-    { $match: { urlId } },
+    { $match: matchStage },
     {
       $group: {
         _id: {
@@ -46,7 +69,7 @@ exports.getAnalyticsData = async (url) => {
   });
 
   const locationAgg = await Click.aggregate([
-    { $match: { urlId } },
+    { $match: matchStage },
     {
       $group: {
         _id: "$location",
@@ -61,16 +84,16 @@ exports.getAnalyticsData = async (url) => {
   });
 
   const browserAgg = await Click.aggregate([
-    { $match: { urlId } },
+    { $match: matchStage },
     {
       $group: {
         _id: {
           $switch: {
             branches: [
+              { case: { $regexMatch: { input: "$userAgent", regex: "Edg" } }, then: "Edge" },
               { case: { $regexMatch: { input: "$userAgent", regex: "Chrome" } }, then: "Chrome" },
               { case: { $regexMatch: { input: "$userAgent", regex: "Firefox" } }, then: "Firefox" },
-              { case: { $regexMatch: { input: "$userAgent", regex: "Safari" } }, then: "Safari" },
-              { case: { $regexMatch: { input: "$userAgent", regex: "Edge" } }, then: "Edge" }
+              { case: { $regexMatch: { input: "$userAgent", regex: "Safari" } }, then: "Safari" }
             ],
             default: "Other"
           }

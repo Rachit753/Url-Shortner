@@ -63,7 +63,13 @@ exports.redirectUrl = asyncHandler(async (req, res) => {
 exports.getAnalytics = asyncHandler(async (req, res) => {
   const url = await getUrlByShortId(req.params.shortId);
 
-  const data = await getAnalyticsData(url);
+  const filters = {
+    startDate: req.query.startDate,
+    endDate: req.query.endDate,
+    browser: req.query.browser,
+  };
+
+  const data = await getAnalyticsData(url, filters);
 
   res.setHeader("Cache-Control", "no-store");
   res.json(data);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import MetricCard from "./MetricCard";
 import {
@@ -12,29 +12,48 @@ const AnalyticsDashboard = ({ shortId }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [filters, setFilters] = useState({
+    startDate: "",
+    endDate: "",
+    browser: ""
+  });
+
+  const fetchAnalytics = useCallback(async (customFilters = filters) => {
+    setLoading(true);
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/url/${shortId}/analytics`,
+        {
+          params: customFilters,
+          headers: { "Cache-Control": "no-cache" }
+        }
+      );
+
+      setData({ ...res.data });
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+    }
+  }, [shortId, filters]);
+
   useEffect(() => {
     if (!shortId) return;
 
-    const fetchAnalytics = async () => {
-      try {
-        const res = await axios.get(
-          `http://localhost:5000/api/url/${shortId}/analytics`,
-          { headers: { "Cache-Control": "no-cache" } }
-        );
-
-        setData({ ...res.data });
-        setLoading(false);
-      } catch (err) {
-        console.error(err);
-        setLoading(false);
-      }
-    };
-
     fetchAnalytics();
 
-    const interval = setInterval(fetchAnalytics, 3000);
+    if (filters.startDate || filters.endDate || filters.browser) return;
+
+    const interval = setInterval(() => {
+      fetchAnalytics();
+    }, 10000);
+
     return () => clearInterval(interval);
-  }, [shortId]);
+  }, [shortId, fetchAnalytics, filters]);
+
+  const applyFilters = () => {
+    fetchAnalytics(filters);
+  };
 
   if (!shortId) {
     return <p style={{ color: "white" }}>Enter a URL to generate & view analytics.</p>;
@@ -47,7 +66,7 @@ const AnalyticsDashboard = ({ shortId }) => {
   if (!data) {
     return <p style={{ color: "white" }}>No data found.</p>;
   }
-  
+
   const dailyClicks = Object.entries(data.dailyClicks || {}).map(([date, count]) => ({
     date,
     count: Number(count)
@@ -73,9 +92,45 @@ const AnalyticsDashboard = ({ shortId }) => {
     <div style={{ padding: "30px", textAlign: "center" }}>
       <h1>📊 URL Analytics Dashboard</h1>
 
-      <button onClick={() => window.location.reload()}>
+      <button onClick={applyFilters}>
         🔄 Refresh Analytics
       </button>
+
+      <div style={{ marginBottom: "20px", marginTop: "20px" }}>
+        <input
+          type="date"
+          value={filters.startDate}
+          onChange={(e) =>
+            setFilters({ ...filters, startDate: e.target.value })
+          }
+        />
+
+        <input
+          type="date"
+          value={filters.endDate}
+          onChange={(e) =>
+            setFilters({ ...filters, endDate: e.target.value })
+          }
+        />
+
+        <select
+          value={filters.browser}
+          onChange={(e) =>
+            setFilters({ ...filters, browser: e.target.value })
+          }
+          style={{ padding: "10px", borderRadius: "10px", marginLeft: "10px" }}
+        >
+          <option value="">All Browsers</option>
+          <option value="Chrome">Chrome</option>
+          <option value="Firefox">Firefox</option>
+          <option value="Safari">Safari</option>
+          <option value="Edge">Edge</option>
+        </select>
+
+        <button onClick={applyFilters} style={{ marginLeft: "10px" }}>
+          Apply Filters
+        </button>
+      </div>
 
       <p><b>Short ID:</b> {data.shortId}</p>
 
@@ -93,7 +148,7 @@ const AnalyticsDashboard = ({ shortId }) => {
 
       {!hasAnalytics && (
         <p style={{ marginTop: "30px", color: "white" }}>
-          No analytics yet. Click your short link.
+          No analytics for selected filters.
         </p>
       )}
 
